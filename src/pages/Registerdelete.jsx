@@ -1,58 +1,115 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import API from "../Utilites/API";
-import "../Utilites/delete.css";
-const Registerdelete = () => {
-  const slide = useNavigate();
-  const [username, setusername] = useState();
-  function loginuser(e) {
-    e.preventDefault();
-    const local = localStorage.getItem("newusername");
-    if (username == local) {
-      slide("/home");
+import { useState } from "react";
+
+function Square({ value, onSquareClick }) {
+  return (
+    <button className="square" onClick={onSquareClick}>
+      {value}
+    </button>
+  );
+}
+
+function Board({ xIsNext, squares, onPlay }) {
+  function handleClick(i) {
+    if (calculateWinner(squares) || squares[i]) {
+      return;
     }
+    const nextSquares = squares.slice();
+    if (xIsNext) {
+      nextSquares[i] = "X";
+    } else {
+      nextSquares[i] = "O";
+    }
+    onPlay(nextSquares);
+  }
+
+  const winner = calculateWinner(squares);
+  let status;
+  if (winner) {
+    status = "Winner: " + winner;
+  } else {
+    status = "Next player: " + (xIsNext ? "X" : "O");
   }
 
   return (
-    <div className="flex justify-center mt-8">
-      <form
-        id="myform"
-        action=""
-        className=" font-bold flex justify-center flex-col w-1/2 bg-slate-200"
-      >
-        <h1 className="mx-auto text-red-700 text-4xl">register here!</h1>
-        <div className="flex justify-center flex-col  w-1/2 mx-auto bg-slate-300">
-          <label htmlFor="useername"> username:</label>
-          <input
-            type="text"
-            placeholder="username"
-            className="m-6 p-2 rounded-lg"
-            autoComplete="OFF"
-            id="username"
-            value={username}
-            onChange={(e) => setusername(e.target.value)}
-          />
+    <>
+      <div className="status">{status}</div>
+      <div className="board-row">
+        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
+        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
+        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
+        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
+        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
+      </div>
+      <div className="board-row">
+        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
+        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
+        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+      </div>
+    </>
+  );
+}
 
-          <label htmlFor="password">password</label>
-          <input
-            type="password"
-            className="m-6 p-2 rounded-lg"
-            autoComplete="OFF"
-            id="passsword"
-          />
+export default function Registerdelete() {
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const xIsNext = currentMove % 2 === 0;
+  const currentSquares = history[currentMove];
 
-          <label htmlFor="Email">Email:</label>
-          <input type="mail" className="m-6 p-2 rounded-lg" id="email" />
-        </div>
-        <button
-          className="bg-blue-500 p-3 rounded-lg  hover:opacity-0.5 m-3 w-1/4  mx-auto"
-          onClick={(e) => loginuser(e)}
-        >
-          submit
-        </button>
-      </form>
+  function handlePlay(nextSquares) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+  }
+
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  const moves = history.map((squares, move) => {
+    let description;
+    if (move > 0) {
+      description = "Go to move #" + move;
+    } else {
+      description = "Go to game start";
+    }
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
     </div>
   );
-};
+}
 
-export default Registerdelete;
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
